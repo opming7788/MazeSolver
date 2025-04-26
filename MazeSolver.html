@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>迷宮產生器</title>
+    <style>
+      body {
+        text-align: center;
+        font-family: Arial;
+      }
+      canvas {
+        border: 1px solid black;
+        background-color: white;
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>迷宮產生器（DFS+BFS）</h1>
+    <canvas id="mazeCanvas" width="420" height="420"></canvas><br />
+    <button onclick="generateMaze()">產生迷宮</button>
+    <button onclick="solveMaze()">解迷宮</button>
+
+    <script>
+      const canvas = document.getElementById("mazeCanvas");
+      const ctx = canvas.getContext("2d");
+      const cellSize = 20;
+      const cols = 21;
+      const rows = 21;
+      let maze = [];
+
+      function initMaze() {
+        maze = Array.from({ length: rows }, () => Array(cols).fill("#"));
+      }
+
+      function drawMaze() {
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (maze[y][x] === "#") ctx.fillStyle = "black";
+            else if (maze[y][x] === ".") ctx.fillStyle = "orange";
+            else if (maze[y][x] === "S") ctx.fillStyle = "green";
+            else if (maze[y][x] === "E") ctx.fillStyle = "red";
+            else ctx.fillStyle = "white";
+
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+        }
+      }
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      function generateMazeDFS(x, y) {
+        maze[y][x] = " ";
+        const directions = [
+          { dx: 0, dy: -2 },
+          { dx: 2, dy: 0 },
+          { dx: 0, dy: 2 },
+          { dx: -2, dy: 0 },
+        ];
+        shuffle(directions);
+
+        for (const { dx, dy } of directions) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (
+            nx > 0 &&
+            nx < cols - 1 &&
+            ny > 0 &&
+            ny < rows - 1 &&
+            maze[ny][nx] === "#"
+          ) {
+            maze[y + dy / 2][x + dx / 2] = " ";
+            generateMazeDFS(nx, ny);
+          }
+        }
+      }
+
+      function generateMaze() {
+        initMaze();
+        generateMazeDFS(1, 1);
+        drawMaze();
+      }
+
+      function solveMaze() {
+        const queue = [];
+        const visited = Array.from({ length: rows }, () =>
+          Array(cols).fill(false)
+        );
+        const parent = Array.from({ length: rows }, () =>
+          Array(cols).fill(null)
+        );
+        const directions = [
+          { dx: 0, dy: -1 },
+          { dx: 1, dy: 0 },
+          { dx: 0, dy: 1 },
+          { dx: -1, dy: 0 },
+        ];
+
+        const start = { x: 1, y: 1 };
+        const end = { x: cols - 2, y: rows - 2 };
+
+        queue.push(start);
+        visited[start.y][start.x] = true;
+
+        while (queue.length > 0) {
+          const { x, y } = queue.shift();
+          if (x === end.x && y === end.y) break;
+
+          for (const { dx, dy } of directions) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (
+              nx >= 0 &&
+              ny >= 0 &&
+              nx < cols &&
+              ny < rows &&
+              maze[ny][nx] === " " &&
+              !visited[ny][nx]
+            ) {
+              visited[ny][nx] = true;
+              parent[ny][nx] = { x, y };
+              queue.push({ x: nx, y: ny });
+            }
+          }
+        }
+
+        // 從終點回推到起點
+        let cur = end;
+        while (cur.x !== start.x || cur.y !== start.y) {
+          maze[cur.y][cur.x] = ".";
+          cur = parent[cur.y][cur.x];
+        }
+        maze[start.y][start.x] = "S";
+        maze[end.y][end.x] = "E";
+
+        drawMaze();
+      }
+
+      generateMaze(); // 預設先產生一個迷宮
+    </script>
+  </body>
+</html>
