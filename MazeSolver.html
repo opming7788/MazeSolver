@@ -32,6 +32,9 @@
       const rows = 21;
       let maze = [];
 
+      const start = { x: 1, y: 1 };
+      const end = { x: cols - 2, y: rows - 2 };
+
       function initMaze() {
         maze = Array.from({ length: rows }, () => Array(cols).fill("#"));
       }
@@ -57,8 +60,11 @@
         }
       }
 
-      function generateMazeDFS(x, y) {
+      async function generateMazeDFS(x, y) {
         maze[y][x] = " ";
+        drawMaze();
+        await sleep(200);
+
         const directions = [
           { dx: 0, dy: -2 },
           { dx: 2, dy: 0 },
@@ -78,15 +84,20 @@
             maze[ny][nx] === "#"
           ) {
             maze[y + dy / 2][x + dx / 2] = " ";
-            generateMazeDFS(nx, ny);
+
+            await generateMazeDFS(nx, ny);
           }
         }
+      }
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
       }
 
       function generateMaze() {
         initMaze();
         generateMazeDFS(1, 1);
-        drawMaze();
+        // drawMaze();
       }
 
       function solveMaze() {
@@ -103,9 +114,6 @@
           { dx: 0, dy: 1 },
           { dx: -1, dy: 0 },
         ];
-
-        const start = { x: 1, y: 1 };
-        const end = { x: cols - 2, y: rows - 2 };
 
         queue.push(start);
         visited[start.y][start.x] = true;
@@ -132,16 +140,45 @@
           }
         }
 
+        let path = [];
         // 從終點回推到起點
         let cur = end;
         while (cur.x !== start.x || cur.y !== start.y) {
           maze[cur.y][cur.x] = ".";
+          path.push(cur);
           cur = parent[cur.y][cur.x];
         }
         maze[start.y][start.x] = "S";
         maze[end.y][end.x] = "E";
+        path.shift(); // 移除起點
+        path.reverse(); // 反轉路徑以便從起點到終點繪製
 
-        drawMaze();
+        drawparentMaze(path);
+        // drawMaze();
+      }
+
+      function drawparentMaze(path) {
+        ctx.fillStyle = "green";
+        ctx.fillRect(
+          start.x * cellSize,
+          start.y * cellSize,
+          cellSize,
+          cellSize
+        );
+        ctx.fillStyle = "red";
+        ctx.fillRect(end.x * cellSize, end.y * cellSize, cellSize, cellSize);
+
+        path.forEach((element, index) => {
+          setTimeout(() => {
+            ctx.fillStyle = "orange";
+            ctx.fillRect(
+              element.x * cellSize,
+              element.y * cellSize,
+              cellSize,
+              cellSize
+            );
+          }, index * 50); // 每個格子的繪製時間間隔為 200ms
+        });
       }
 
       generateMaze(); // 預設先產生一個迷宮
