@@ -21,8 +21,8 @@
   <body>
     <h1>迷宮產生器（DFS+BFS）</h1>
     <canvas id="mazeCanvas" width="420" height="420"></canvas><br />
-    <button onclick="generateMaze()">產生迷宮</button>
-    <button onclick="solveMaze()">解迷宮</button>
+    <button id="generateButton" onclick="generateMaze()">產生迷宮</button>
+    <button id="solveMaze" onclick="solveMaze()">解迷宮</button>
 
     <script>
       const canvas = document.getElementById("mazeCanvas");
@@ -63,7 +63,7 @@
       async function generateMazeDFS(x, y) {
         maze[y][x] = " ";
         drawMaze();
-        await sleep(200);
+        await sleep(100);
 
         const directions = [
           { dx: 0, dy: -2 },
@@ -94,10 +94,18 @@
         return new Promise((resolve) => setTimeout(resolve, ms));
       }
 
-      function generateMaze() {
+      function toggleButtons(disabled) {
+        const buttons = document.querySelectorAll("button");
+        buttons.forEach((button) => {
+          button.disabled = disabled;
+        });
+      }
+
+      async function generateMaze() {
+        toggleButtons(true); // 禁用所有按鈕
         initMaze();
-        generateMazeDFS(1, 1);
-        // drawMaze();
+        await generateMazeDFS(1, 1);
+        toggleButtons(false); // 啟用所有按鈕
       }
 
       function solveMaze() {
